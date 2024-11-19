@@ -2,6 +2,7 @@ package app.revanced.extension.youtube.sponsorblock.ui;
 
 import android.content.Context;
 import android.content.res.ColorStateList;
+import android.graphics.drawable.Drawable;
 import android.graphics.drawable.RippleDrawable;
 import android.util.AttributeSet;
 import android.util.TypedValue;
@@ -109,10 +110,18 @@ public final class NewSegmentLayout extends FrameLayout {
                                   final ButtonOnClickHandlerFunction handler, final String debugMessage) {
         final ImageButton button = findViewById(getResourceIdentifier(context, resourceIdentifierName, "id"));
 
-        // Add ripple effect
-        button.setBackgroundResource(rippleEffectId);
-        RippleDrawable rippleDrawable = (RippleDrawable) button.getBackground();
-        rippleDrawable.setColor(rippleColorStateList);
+        // Add ripple effect with type safety
+        Drawable originalBackground = button.getBackground();
+        if (originalBackground instanceof RippleDrawable) {
+            RippleDrawable rippleDrawable = (RippleDrawable) originalBackground;
+            rippleDrawable.setColor(rippleColorStateList);
+        } else {
+            // Wrap incompatible drawable in a RippleDrawable
+            RippleDrawable rippleDrawable = new RippleDrawable(
+                    rippleColorStateList, originalBackground, null
+            );
+            button.setBackground(rippleDrawable);
+        }
 
         button.setOnClickListener((v) -> {
             handler.apply();
