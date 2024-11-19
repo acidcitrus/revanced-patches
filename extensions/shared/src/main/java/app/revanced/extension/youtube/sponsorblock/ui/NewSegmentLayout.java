@@ -1,7 +1,8 @@
-package app.revanced.extension.youtube.sponsorblock.ui;
+package app.revanced.integrations.youtube.sponsorblock.ui;
 
 import android.content.Context;
 import android.content.res.ColorStateList;
+import android.graphics.drawable.Drawable;
 import android.graphics.drawable.RippleDrawable;
 import android.util.AttributeSet;
 import android.util.TypedValue;
@@ -9,13 +10,13 @@ import android.view.LayoutInflater;
 import android.widget.FrameLayout;
 import android.widget.ImageButton;
 
-import app.revanced.extension.youtube.patches.VideoInformation;
-import app.revanced.extension.youtube.settings.Settings;
-import app.revanced.extension.youtube.sponsorblock.SponsorBlockUtils;
-import app.revanced.extension.shared.Logger;
+import app.revanced.integrations.youtube.patches.VideoInformation;
+import app.revanced.integrations.youtube.settings.Settings;
+import app.revanced.integrations.youtube.sponsorblock.SponsorBlockUtils;
+import app.revanced.integrations.shared.Logger;
 
-import static app.revanced.extension.shared.Utils.getResourceDimensionPixelSize;
-import static app.revanced.extension.shared.Utils.getResourceIdentifier;
+import static app.revanced.integrations.shared.Utils.getResourceDimensionPixelSize;
+import static app.revanced.integrations.shared.Utils.getResourceIdentifier;
 
 public final class NewSegmentLayout extends FrameLayout {
     private static final ColorStateList rippleColorStateList = new ColorStateList(
@@ -109,10 +110,24 @@ public final class NewSegmentLayout extends FrameLayout {
                                   final ButtonOnClickHandlerFunction handler, final String debugMessage) {
         final ImageButton button = findViewById(getResourceIdentifier(context, resourceIdentifierName, "id"));
 
-        // Add ripple effect
-        button.setBackgroundResource(rippleEffectId);
-        RippleDrawable rippleDrawable = (RippleDrawable) button.getBackground();
-        rippleDrawable.setColor(rippleColorStateList);
+        try {
+            // Add ripple effect dynamically based on the actual drawable type
+            Drawable background = button.getBackground();
+            if (background instanceof RippleDrawable) {
+                RippleDrawable rippleDrawable = (RippleDrawable) background;
+                rippleDrawable.setColor(rippleColorStateList);
+            } else {
+                // If not RippleDrawable, create a new RippleDrawable wrapping the current background
+                RippleDrawable rippleDrawable = new RippleDrawable(
+                        rippleColorStateList,
+                        background,
+                        null
+                );
+                button.setBackground(rippleDrawable);
+            }
+        } catch (Exception e) {
+            Logger.printException(() -> "Error applying ripple effect to button: " + resourceIdentifierName, e);
+        }
 
         button.setOnClickListener((v) -> {
             handler.apply();
